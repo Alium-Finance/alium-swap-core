@@ -54,5 +54,5 @@ interface IAliumPair is IAliumERC20 {
 
     function sync() external;
 
-    function initialize(address, address) external;
+    function initialize(address factory, address token0, address token1) external;
 }

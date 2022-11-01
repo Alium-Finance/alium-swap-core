@@ -62,13 +62,9 @@ contract AliumPair is IAliumPair, AliumERC20 {
 
     event MintFee(address indexed recipient, uint256 amountLP);
 
-    constructor() {
-        factory = msg.sender;
-    }
-
     // called once by the factory at time of deployment
-    function initialize(address _token0, address _token1) external {
-        require(msg.sender == factory, "Alium: FORBIDDEN"); // sufficient check
+    function initialize(address _factory, address _token0, address _token1) external {
+        factory = _factory;
         token0 = _token0;
         token1 = _token1;
     }
