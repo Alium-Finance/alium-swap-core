@@ -3,6 +3,7 @@ pragma solidity =0.8.15;
 
 import "./interfaces/IAliumERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./libraries/ChainId.sol";
 
 contract AliumERC20 is IAliumERC20 {
     using SafeMath for uint256;
@@ -20,16 +21,12 @@ contract AliumERC20 is IAliumERC20 {
     mapping(address => uint256) public override nonces;
 
     constructor() {
-        uint256 chainId;
-        assembly {
-            chainId := chainid()
-        }
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256(bytes(name)),
                 keccak256(bytes("1")),
-                chainId,
+                ChainId.get(),
                 address(this)
             )
         );
