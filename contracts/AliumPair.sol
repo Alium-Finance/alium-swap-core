@@ -15,7 +15,7 @@ contract AliumPair is IAliumPair, AliumERC20 {
     using UQ112x112 for uint224;
 
     uint256 public constant MINIMUM_LIQUIDITY = 10**3;
-    bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
+    bytes4 private constant SELECTOR = IERC20.transfer.selector;
 
     address public factory;
     address public token0;
