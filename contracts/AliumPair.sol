@@ -60,8 +60,6 @@ contract AliumPair is IAliumPair, AliumERC20 {
         require(success && (data.length == 0 || abi.decode(data, (bool))), "Alium: TRANSFER_FAILED");
     }
 
-    event MintFee(address indexed recipient, uint256 amountLP);
-
     // called once by the factory at time of deployment
     function initialize(
         address _factory,
@@ -107,11 +105,7 @@ contract AliumPair is IAliumPair, AliumERC20 {
                     uint256 numerator = totalSupply.mul(rootK.sub(rootKLast));
                     uint256 denominator = rootK.mul(5).add(rootKLast);
                     uint256 liquidity = numerator / denominator;
-                    if (liquidity > 0) {
-                        _mint(address(this), liquidity);
-                        emit MintFee(feeTo, liquidity);
-                        _internalBurn(feeTo, false, liquidity);
-                    }
+                    if (liquidity > 0) _mint(feeTo, liquidity);
                 }
             }
         } else if (_kLast != 0) {
@@ -144,7 +138,27 @@ contract AliumPair is IAliumPair, AliumERC20 {
 
     // this low-level function should be called from a contract which performs important safety checks
     function burn(address to) external lock returns (uint256 amount0, uint256 amount1) {
-        return _internalBurn(to, true, 0);
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
+        address _token0 = token0;                                // gas savings
+        address _token1 = token1;                                // gas savings
+        uint balance0 = IERC20(_token0).balanceOf(address(this));
+        uint balance1 = IERC20(_token1).balanceOf(address(this));
+        uint liquidity = balanceOf[address(this)];
+
+        bool feeOn = _mintFee(_reserve0, _reserve1);
+        uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
+        amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
+        amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
+        require(amount0 > 0 && amount1 > 0, 'Pancake: INSUFFICIENT_LIQUIDITY_BURNED');
+        _burn(address(this), liquidity);
+        _safeTransfer(_token0, to, amount0);
+        _safeTransfer(_token1, to, amount1);
+        balance0 = IERC20(_token0).balanceOf(address(this));
+        balance1 = IERC20(_token1).balanceOf(address(this));
+
+        _update(balance0, balance1, _reserve0, _reserve1);
+        if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
+        emit Burn(msg.sender, amount0, amount1, to);
     }
 
     // this low-level function should be called from a contract which performs important safety checks
@@ -199,46 +213,5 @@ contract AliumPair is IAliumPair, AliumERC20 {
     // force reserves to match balances
     function sync() external lock {
         _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
-    }
-
-    function _internalBurn(
-        address to,
-        bool _withMintFee,
-        uint256 _toBurn
-    ) internal returns (uint256 amount0, uint256 amount1) {
-        (uint112 _reserve0, uint112 _reserve1, ) = getReserves(); // gas savings
-        address _token0 = token0; // gas savings
-        address _token1 = token1; // gas savings
-        uint256 liquidity;
-        bool feeOn;
-        if (_withMintFee) {
-            feeOn = _mintFee(_reserve0, _reserve1);
-            (_reserve0, _reserve1, ) = getReserves();
-            liquidity = balanceOf[address(this)];
-        }
-        if (_toBurn > 0 && _withMintFee == false) {
-            feeOn = true;
-            liquidity = _toBurn;
-        }
-        uint256 _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
-        uint256 balance0 = IERC20(_token0).balanceOf(address(this));
-        uint256 balance1 = IERC20(_token1).balanceOf(address(this));
-        amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
-        amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
-        require(amount0 > 0 && amount1 > 0, "Alium: INSUFFICIENT_LIQUIDITY_BURNED");
-        _burn(address(this), liquidity);
-
-        require(IERC20(_token0).balanceOf(address(this)) >= amount0, "amount0");
-        require(IERC20(_token1).balanceOf(address(this)) >= amount1, "amount1");
-
-        _safeTransfer(_token0, to, amount0);
-        _safeTransfer(_token1, to, amount1);
-
-        balance0 = IERC20(_token0).balanceOf(address(this));
-        balance1 = IERC20(_token1).balanceOf(address(this));
-
-        _update(balance0, balance1, _reserve0, _reserve1);
-        if (feeOn) kLast = uint256(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
-        emit Burn(msg.sender, amount0, amount1, to);
     }
 }
