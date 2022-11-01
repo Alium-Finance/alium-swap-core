@@ -1,4 +1,5 @@
-pragma solidity =0.5.17;
+// SPDX-License-Identifier: GPL-3.0-or-later
+pragma solidity =0.8.15;
 
 import "./interfaces/IAliumFactory.sol";
 import "./AliumPair.sol";
@@ -12,9 +13,7 @@ contract AliumFactory is IAliumFactory {
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
 
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint256);
-
-    constructor(address _feeToSetter) public {
+    constructor(address _feeToSetter) {
         feeToSetter = _feeToSetter;
     }
 

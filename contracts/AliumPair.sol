@@ -1,5 +1,7 @@
-pragma solidity =0.5.17;
+// SPDX-License-Identifier: GPL-3.0-or-later
+pragma solidity =0.8.15;
 
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./interfaces/IAliumPair.sol";
 import "./AliumERC20.sol";
 import "./libraries/Math.sol";
@@ -58,20 +60,9 @@ contract AliumPair is IAliumPair, AliumERC20 {
         require(success && (data.length == 0 || abi.decode(data, (bool))), "Alium: TRANSFER_FAILED");
     }
 
-    event Mint(address indexed sender, uint256 amount0, uint256 amount1);
     event MintFee(address indexed recipient, uint256 amountLP);
-    event Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to);
-    event Swap(
-        address indexed sender,
-        uint256 amount0In,
-        uint256 amount1In,
-        uint256 amount0Out,
-        uint256 amount1Out,
-        address indexed to
-    );
-    event Sync(uint112 reserve0, uint112 reserve1);
 
-    constructor() public {
+    constructor() {
         factory = msg.sender;
     }
 
@@ -89,7 +80,7 @@ contract AliumPair is IAliumPair, AliumERC20 {
         uint112 _reserve0,
         uint112 _reserve1
     ) private {
-        require(balance0 <= uint112(-1) && balance1 <= uint112(-1), "Alium: OVERFLOW");
+        require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, "Alium: OVERFLOW");
         uint32 blockTimestamp = uint32(block.timestamp % 2**32);
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
         if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {
