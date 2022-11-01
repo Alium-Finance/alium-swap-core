@@ -1,7 +1,7 @@
-pragma solidity >=0.5.0;
+pragma solidity =0.5.15;
 
-import './interfaces/IAliumFactory.sol';
-import './AliumPair.sol';
+import "./interfaces/IAliumFactory.sol";
+import "./AliumPair.sol";
 
 contract AliumFactory is IAliumFactory {
     bytes32 public constant INIT_CODE_PAIR_HASH = keccak256(abi.encodePacked(type(AliumPair).creationCode));
@@ -12,21 +12,21 @@ contract AliumFactory is IAliumFactory {
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
 
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
+    event PairCreated(address indexed token0, address indexed token1, address pair, uint256);
 
     constructor(address _feeToSetter) public {
         feeToSetter = _feeToSetter;
     }
 
-    function allPairsLength() external view returns (uint) {
+    function allPairsLength() external view returns (uint256) {
         return allPairs.length;
     }
 
     function createPair(address tokenA, address tokenB) external returns (address pair) {
-        require(tokenA != tokenB, 'Alium: IDENTICAL_ADDRESSES');
+        require(tokenA != tokenB, "Alium: IDENTICAL_ADDRESSES");
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        require(token0 != address(0), 'Alium: ZERO_ADDRESS');
-        require(getPair[token0][token1] == address(0), 'Alium: PAIR_EXISTS'); // single check is sufficient
+        require(token0 != address(0), "Alium: ZERO_ADDRESS");
+        require(getPair[token0][token1] == address(0), "Alium: PAIR_EXISTS"); // single check is sufficient
         bytes memory bytecode = type(AliumPair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
         assembly {
@@ -40,12 +40,12 @@ contract AliumFactory is IAliumFactory {
     }
 
     function setFeeTo(address _feeTo) external {
-        require(msg.sender == feeToSetter, 'Alium: FORBIDDEN');
+        require(msg.sender == feeToSetter, "Alium: FORBIDDEN");
         feeTo = _feeTo;
     }
 
     function setFeeToSetter(address _feeToSetter) external {
-        require(msg.sender == feeToSetter, 'Alium: FORBIDDEN');
+        require(msg.sender == feeToSetter, "Alium: FORBIDDEN");
         feeToSetter = _feeToSetter;
     }
 }
