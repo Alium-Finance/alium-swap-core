@@ -1,4 +1,4 @@
-pragma solidity =0.5.15;
+pragma solidity =0.5.17;
 
 // a library for performing various math operations
 

@@ -1,4 +1,4 @@
-pragma solidity =0.5.15;
+pragma solidity =0.5.17;
 
 interface IAliumERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
